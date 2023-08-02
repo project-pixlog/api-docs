@@ -34,7 +34,7 @@ class Contact extends React.Component {
         )}
         {email && (
           <Link href={sanitizeUrl(`mailto:${email}`)}>
-            {url ? `Send email to ${name}` : `Contact ${name}`}
+            {url ? `Envie um email para ${name}` : `Contato ${name}`}
           </Link>
         )}
       </div>

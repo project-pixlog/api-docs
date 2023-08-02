@@ -14,6 +14,9 @@ window.onload = function() {
       SwaggerUIBundle.plugins.DownloadUrl
     ],
     // requestSnippetsEnabled: true,
+    displayOperationId: true,
+    defaultModelsExpandDepth: 3,
+    defaultModelExpandDepth: 3,
     layout: "StandaloneLayout"
   })
 

@@ -93,9 +93,9 @@ export default class Responses extends React.Component {
     return (
       <div className="responses-wrapper">
         <div className="opblock-section-header">
-          <h4>Responses</h4>
+          <h4>Respostas</h4>
             { specSelectors.isOAS3() ? null : <label htmlFor={controlId}>
-              <span>Response content type</span>
+              <span>Tipo do conteúdo da resposta</span>
               <ContentType value={producesValue}
                          ariaControls={regionId}
                          ariaLabel="Response content type"
@@ -116,7 +116,7 @@ export default class Responses extends React.Component {
                                                 path={ this.props.path }
                                                 method={ this.props.method }
                                                 displayRequestDuration={ displayRequestDuration } />
-                                  <h4>Responses</h4>
+                                  <h4>Respostas</h4>
                                 </div>
 
           }

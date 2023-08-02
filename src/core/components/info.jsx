@@ -114,7 +114,7 @@ class Info extends React.Component {
         {termsOfServiceUrl && (
           <div className="info__tos">
             <Link target="_blank" href={sanitizeUrl(termsOfServiceUrl)}>
-              Terms of service
+              Termos de serviço
             </Link>
           </div>
         )}

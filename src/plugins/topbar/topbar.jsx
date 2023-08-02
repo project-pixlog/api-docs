@@ -111,7 +111,7 @@ export default class Topbar extends React.Component {
 
   render() {
     let { getComponent, specSelectors, getConfigs } = this.props
-    const Button = getComponent("Button")
+    // const Button = getComponent("Button")
     const Link = getComponent("Link")
     const Logo = getComponent("Logo")
 
@@ -142,8 +142,8 @@ export default class Topbar extends React.Component {
     }
     else {
       formOnSubmit = this.downloadUrl
-      control.push(<input className={classNames.join(" ")} type="text" onChange={ this.onUrlChange } value={this.state.url} disabled={isLoading} />)
-      control.push(<Button className="download-url-button" onClick={ this.downloadUrl }>Explore</Button>)
+      // control.push(<input className={classNames.join(" ")} type="text" onChange={ this.onUrlChange } value={this.state.url} disabled={isLoading} />)
+      // control.push(<Button className="download-url-button" onClick={ this.downloadUrl }>Explore</Button>)
     }
 
     return (
