@@ -2,6 +2,15 @@ openapi: "3.0.3"
 
 components:
   parameters:
+    userId:
+      name: userId
+      in: path
+      required: true
+      description: |
+        Identificador único do usuário.
+      schema:
+        type: string
+        format: nanoid
     reportId:
       name: reportId
       in: path
@@ -367,6 +376,36 @@ components:
         description:
           description: Descrição do feedback
           type: string
+    postV2Settings:
+      type: object
+      required:
+        - "userId"
+        - "updatedAt"
+        - "options"
+      properties:
+        userId:
+          description: ID do usuário.
+          type: string
+          format: nanoid
+        updatedAt:
+          description: Data de atualização das configurações do usuário.
+          type: integer
+        options:
+          description: Opções de configuração.
+          type: object
+          properties:
+            diameterFactor:
+              description: Fator de diâmetro.
+              type: number
+              format: float
+            volumeFactor:
+              description: Fator de volume.
+              type: number
+              format: float
+            overwrite:
+              description: Sobrescrever configurações.
+              type: boolean
+              default: false
     # Models
     Error:
       type: object
@@ -667,6 +706,32 @@ components:
           type: string
           format: date-time
           description: Data de criação do feedback.
+    Settings:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: nanoid
+          description: ID do usuário.
+        updatedAt:
+          type: string
+          format: date-time
+          description: Data de atualização das configurações do usuário.
+        options:
+          type: object
+          properties:
+            diameterFactor:
+              type: number
+              format: float
+              description: Fator de diâmetro.
+            volumeFactor:
+              type: number
+              format: float
+              description: Fator de volume.
+            overwrite:
+              type: boolean
+              default: false
+              description: Sobrescrever configurações.
 
   responses:
     BadRequest:
@@ -715,6 +780,8 @@ tags:
     description: Processamento de pagamentos, incluindo transações financeiras, histórico de pagamentos e informações de faturamento.
   - name: Feedbacks
     description: Coleta de feedbacks dos usuários, permitindo que expressem suas opiniões, sugestões ou problemas relacionados à aplicação.
+  - name: Configurações
+    description: Configurações do usuário, como fatores de diâmetro e volume.
   - name: Notificações por E-mail
     description: Envio de notificações por e-mail, como confirmações, alertas ou comunicações importantes para os usuários.
   - name: Debug
@@ -1118,7 +1185,14 @@ paths:
         ## Segurança
 
         Dependendo da sua permissão de acesso, você pode consultar apenas os seus próprios dados.
-      operationId: getUserFeedbacks
+      operationId: getFeedbacksByUserId
+      parameters:
+        - $ref: "#/components/parameters/userId"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/perPage"
+        - $ref: "#/components/parameters/query"
+        - $ref: "#/components/parameters/sortBy"
+        - $ref: "#/components/parameters/sortOrder"
       tags:
         - "Usuários"
       responses:
@@ -1154,6 +1228,7 @@ paths:
       tags:
         - "Usuários"
       parameters:
+        - $ref: "#/components/parameters/userId"
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/perPage"
         - $ref: "#/components/parameters/query"
@@ -1192,6 +1267,7 @@ paths:
       tags:
         - "Usuários"
       parameters:
+        - $ref: "#/components/parameters/userId"
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/perPage"
         - $ref: "#/components/parameters/query"
@@ -1243,29 +1319,28 @@ paths:
         422:
           $ref: "#/components/responses/UnprocessableEntity"
   /users/{userId}/settings:
-    post:
-      summary: Atualiza as configurações de um usuário.
+    get:
+      summary: Obter configurações de um usuário.
       description: |
         ## Descrição
 
-        Utilize esta função para atualizar as configurações de um usuário.
-      operationId: updateUserSettings
+        Utilize esta função para consultar informações de configurações de um usuário.
+
+        ## Segurança
+
+        Dependendo da sua permissão de acesso, você pode consultar apenas os seus próprios dados.
+      operationId: getSettingsByUserId
       tags:
         - "Usuários"
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/postV2UserSettings"
+      parameters:
+        - $ref: "#/components/parameters/userId"
       responses:
         200:
-          description: Configurações atualizadas com sucesso.
+          description: Consulta realizada com sucesso.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Users"
+                $ref: "#/components/schemas/Settings"
         400:
           $ref: "#/components/responses/BadRequest"
         404:
@@ -1742,6 +1817,32 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Feedback"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  # Configurações
+  /settings:
+    post:
+      summary: Cria uma nova configuração
+      description: Cria uma nova configuração.
+      operationId: createSetting
+      tags:
+        - "Configurações"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/postV2Settings"
+      responses:
+        201:
+          description: Configuração criada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
         400:
           $ref: "#/components/responses/BadRequest"
         422:
