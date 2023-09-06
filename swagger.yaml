@@ -29,6 +29,15 @@ components:
       schema:
         type: string
         format: nanoid
+    transactionId:
+      name: transactionId
+      in: path
+      required: true
+      description: |
+        Identificador único da transação.
+      schema:
+        type: string
+        format: nanoid
     page:
       name: page
       in: query
@@ -342,7 +351,7 @@ components:
           type: string
           format: password
           description: Nova senha do usuário.
-    postV2UserSettings:
+    putV2UserSettings:
       type: object
       properties:
         updatedAtMs:
@@ -406,6 +415,26 @@ components:
               description: Sobrescrever configurações.
               type: boolean
               default: false
+    postV2Transactions:
+      type: object
+      required:
+        - "userId"
+        - "reportId"
+        - "debit"
+        - "credit"
+      properties:
+        userId:
+          description: Identificador único do usuário.
+          type: string
+          format: nanoid
+        credit:
+          description: Valor creditado.
+          type: number
+          format: float
+        receipt:
+          description: Recibo de pagamento.
+          type: string
+          format: base64
     # Models
     Error:
       type: object
@@ -554,35 +583,6 @@ components:
             $ref: "#/components/schemas/Scans/properties/purchaserId"
           status:
             $ref: "#/components/schemas/Scans/properties/status"
-    Transaction:
-      type: array
-      uniqueItems: true
-      items:
-        properties:
-          transactionId:
-            description: Identificador único da transação.
-            type: string
-            format: nanoid
-          userId:
-            description: Identificador único do usuário.
-            type: string
-            format: nanoid
-          reportId:
-            description: Identificador único do relatório.
-            type: string
-            format: nanoid
-          debit:
-            description: Valor debitado.
-            type: number
-            format: float
-          credit:
-            description: Valor creditado.
-            type: number
-            format: float
-          createdAt:
-            description: Data de criação da transação.
-            type: string
-            format: date-time
     Group:
       type: object
       properties:
@@ -717,21 +717,116 @@ components:
           type: string
           format: date-time
           description: Data de atualização das configurações do usuário.
-        options:
+        diameterFactor:
+          type: number
+          format: float
+          description: Fator de diâmetro.
+        volumeFactor:
+          type: number
+          format: float
+          description: Fator de volume.
+        overwrite:
+          type: boolean
+          default: false
+          description: Sobrescrever configurações.
+    Transactions:
+      type: object
+      properties:
+        transactionId:
+          type: string
+          format: nanoid
+          description: Identificador único da transação.
+        userId:
+          type: string
+          format: nanoid
+          description: Identificador único do usuário.
+        debit:
+          type: number
+          format: float
+          description: Valor debitado.
+        credit:
+          type: number
+          format: float
+          description: Valor creditado.
+        balance:
+          type: number
+          format: float
+          description: Saldo atual.
+        createdAt:
+          type: string
+          format: date-time
+          description: Data de criação da transação.
+    AppResources:
+      type: object
+      properties:
+        telefone_contato:
+          type: string
+          description: Telefone de contato.
+        email_de_contato:
+          type: string
+          format: email
+          description: E-mail de contato.
+        link_termo_de_uso:
+          type: string
+          description: Link para o termo de uso.
+        link_politica_de_privacidade:
+          type: string
+          description: Link para a política de privacidade.
+        link_faq:
+          type: string
+          description: Link para a página de FAQ.
+        link_sobre_nos:
+          type: string
+          description: Link para a página sobre nós.
+        pagamento_implementado:
+          type: boolean
+          description: Indica se o pagamento está implementado.
+        modelos_compativeis:
+          type: array
+          items:
+            type: string
+            description: Modelos compatíveis.
+        data_expiracao_beta:
+          type: string
+          format: date-time
+          description: Data de expiração do beta.
+        pixlog_bundles_info:
           type: object
           properties:
-            diameterFactor:
-              type: number
-              format: float
-              description: Fator de diâmetro.
-            volumeFactor:
-              type: number
-              format: float
-              description: Fator de volume.
-            overwrite:
-              type: boolean
-              default: false
-              description: Sobrescrever configurações.
+            apple_bundles_id:
+              type: array
+              items:
+                type: string
+                description: ID do bundle.
+            free_bundle_details:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: ID do bundle.
+                title:
+                  type: string
+                  description: Título do bundle.
+                price:
+                  type: string
+                  description: Preço do bundle.
+                credit:
+                  type: integer
+                  description: Crédito do bundle.
+                credit_per_cubit:
+                  type: string
+                  description: Crédito por cubit.
+                cubit_meter_price:
+                  type: string
+                  description: Preço por cubit.
+                show_on_bundle_list:
+                  type: boolean
+                  description: Indica se o bundle deve ser exibido na lista.
+        log_type:
+          type: array
+          items:
+            type: string
+            description: Tipo de madeira.
 
   responses:
     BadRequest:
@@ -776,7 +871,7 @@ tags:
     description: Geração de relatórios de escaneamento, contendo informações sobre análises, auditorias ou inspeções realizadas na aplicação.
   - name: Grupos de Relatórios
     description: Gerenciamento de grupos de relatórios.
-  - name: Carteira
+  - name: Transações
     description: Processamento de pagamentos, incluindo transações financeiras, histórico de pagamentos e informações de faturamento.
   - name: Feedbacks
     description: Coleta de feedbacks dos usuários, permitindo que expressem suas opiniões, sugestões ou problemas relacionados à aplicação.
@@ -786,8 +881,8 @@ tags:
     description: Envio de notificações por e-mail, como confirmações, alertas ou comunicações importantes para os usuários.
   - name: Debug
     description: Recursos de depuração da API, usados principalmente para diagnosticar problemas e identificar erros no sistema.
-  - name: Arquivos Estáticos
-    description: Acesso e gerenciamento de arquivos estáticos, como imagens, folhas de estilo e scripts.
+  - name: Recursos Do Aplicativo
+    description: Recursos do aplicativo, que contém informações de telefone, endereço e outras informações úteis.
   - name: Monitoramento da API
     description: Monitoramento e métricas da API, fornecendo informações sobre desempenho, disponibilidade e uso da API.
   - name: Relatórios Disponíveis
@@ -1311,7 +1406,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Transaction"
+                $ref: "#/components/schemas/Transactions"
         400:
           $ref: "#/components/responses/BadRequest"
         404:
@@ -1347,45 +1442,42 @@ paths:
           $ref: "#/components/responses/NotFound"
         422:
           $ref: "#/components/responses/UnprocessableEntity"
-  #   put:
-  #     summary: Atualiza informações do usuário
-  #     description: Atualiza informações do usuário.
-  #     operationId: updateUser
-  #     tags:
-  #       - "Usuários"
-  #     requestBody:
-  #       required: true
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: schemas/User.yaml
-  #     responses:
-  #       200:
-  #         description: Usuário atualizado com sucesso.
-  #         content:
-  #           text/plain:
-  #             schema:
-  #               type: string
-  #               example: Ok
-  #       400:
-  #         $ref: "#/components/responses/BadRequest"
-  #       422:
-  #         $ref: "#/components/responses/UnprocessableEntity"
-  #   delete:
-  #     summary: Desativa conta do usuário
-  #     description: Desativa conta do usuário.
-  #     operationId: deleteUser
-  #     tags:
-  #       - "Usuários"
-  #     responses:
-  #       200:
-  #         $ref: responses/default/Ok.yaml
-  #       400:
-  #         $ref: "#/components/responses/BadRequest"
-  #       404:
-  #         $ref: "#/components/responses/NotFound"
-  #       422:
-  #         $ref: "#/components/responses/UnprocessableEntity"
+    put:
+      summary: Atualizar configurações de um usuário.
+      description: |
+        ## Descrição
+
+        Utilize esta função para atualizar informações de configurações de um usuário.
+
+        ## Segurança
+
+        Dependendo da sua permissão de acesso, você pode atualizar apenas os seus próprios dados.
+      operationId: updateSettingsByUserId
+      tags:
+        - "Usuários"
+      parameters:
+        - $ref: "#/components/parameters/userId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/putV2UserSettings"
+      responses:
+        200:
+          description: Configurações atualizadas com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
+
+
   # Relatórios de Escaneamento
   /scans:
     post:
@@ -1610,154 +1702,103 @@ paths:
           $ref: "#/components/responses/NotFound"
         422:
           $ref: "#/components/responses/UnprocessableEntity"
-  # Carteira
-  # /wallet/credits:
-  #   post:
-  #     summary: Adiciona créditos na carteira.
-  #     description: Adiciona créditos na carteira.
-  #     operationId: addCredits
-  #     tags:
-  #       - "Carteira"
-  #     requestBody:
-  #       required: true
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: schemas/postV1CreatePayment.yaml
-  #     responses:
-  #       201:
-  #         description: Transação criada com sucesso.
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/Transaction"
-  #       400:
-  #         $ref: "#/components/responses/BadRequest"
-  #       422:
-  #         $ref: "#/components/responses/UnprocessableEntity"
-  #   get:
-  #     summary: Retorna uma lista de transações de crédito.
-  #     description: Retorna uma lista de transações.
-  #     operationId: getTransactions
-  #     tags:
-  #       - "Carteira"
-  #     responses:
-  #       200:
-  #         description: Consulta realizada com sucesso.
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/Transaction"
-  #       400:
-  #         $ref: "#/components/responses/BadRequest"
-  #       422:
-  #         $ref: "#/components/responses/UnprocessableEntity"
-  # /wallet/balance:
-  #   get:
-  #     summary: Consulta de saldo da carteira.
-  #     description: Recupera o saldo atual da sua carteira.
-  #     operationId: getWalletBalance
-  #     tags:
-  #       - "Carteira"
-  #     responses:
-  #       200:
-  #         description: Consulta bem-sucedida.
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/Transaction"
-  #       400:
-  #         $ref: "#/components/responses/BadRequest"
-  #       422:
-  #         $ref: "#/components/responses/UnprocessableEntity"
-  # /wallet:
-  #   get:
-  #     summary: Retorna uma lista de transações.
-  #     description: Retorna uma lista de transações.
-  #     operationId: getTransactions
-  #     tags:
-  #       - "Carteira"
-  #     responses:
-  #       200:
-  #         description: Consulta realizada com sucesso.
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/Transaction"
-  #       400:
-  #         $ref: "#/components/responses/BadRequest"
-  #       422:
-  #         $ref: "#/components/responses/UnprocessableEntity"
-  #   get:
-  #     summary: Retorna uma lista de pagamentos
-  #     description: Retorna uma lista de pagamentos.
-  #     operationId: getPayments
-  #     tags:
-  #       - "payments: Pagamentos"
-  #     parameters:
-  #       - $ref: parameters/query/init.yaml
-  #       - $ref: parameters/query/end.yaml
-  #       - $ref: parameters/query/limit.yaml
-  #     responses:
-  #       200:
-  #         description: Consulta realizada com sucesso.
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: schemas/getV1ListPayments.yaml
-  #       400:
-  #         $ref: "#/components/responses/BadRequest"
-  #       404:
-  #         $ref: "#/components/responses/NotFound"
-  #       422:
-  #         $ref: "#/components/responses/UnprocessableEntity"
-  # /payment/{paymentId}:
-  #   get:
-  #     summary: Retorna um pagamento específico através do ID
-  #     description: Retorna um pagamento específico através do ID.
-  #     operationId: getPaymentById
-  #     tags:
-  #       - "payments: Pagamentos"
-  #     parameters:
-  #       - $ref: parameters/path/paymentId.yaml
-  #     responses:
-  #       200:
-  #         description: Pagamento encontrado.
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: schemas/getV1GetPaymentById.yaml
-  #       400:
-  #         $ref: #/components/responses/BadRequest
-  #       404:
-  #         $ref: "#/components/responses/NotFound"
-  #       422:
-  #         $ref: "#/components/responses/UnprocessableEntity"
-  # /startTrial:
-  #   post:
-  #     summary: Inicia um período de teste
-  #     description: Inicia um período de teste.
-  #     operationId: startTrial
-  #     tags:
-  #       - "payments: Pagamentos"
-  #     requestBody:
-  #       required: true
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: schemas/postV1StartTrial.yaml
-  #     responses:
-  #       200:
-  #         description: Operação realizada com sucesso.
-  #         content:
-  #           plain/text:
-  #             schema:
-  #               type: string
-  #               example: "Ok"
-  #       400:
-  #         $ref: #/components/responses/BadRequest
-  #       422:
-  #         $ref: "#/components/responses/UnprocessableEntity"
+
+  # Transações
+  /transactions:
+    post:
+      summary: Cria uma nova transação.
+      description: |
+        ## Descrição
+
+        Utilize esta função para criar novas transações. Essas transações podem representar créditos ou débitos na carteira de um usuário.
+      operationId: createTransaction
+      tags:
+        - "Transações"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/postV2Transactions"
+      responses:
+        201:
+          description: Transação criada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transactions"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
+    get:
+      summary: Obter lista de transações.
+      description: |
+        ## Descrição
+
+        Utilize esta função para consultar informações de transações.
+
+        ## Atributos para busca
+
+        <code>transactionId</code> <code>userId</code> <code>reportId</code> <code>debit</code>
+        <code>credit</code> <code>createdAt</code>
+
+        ## Segurança
+
+        Dependendo da sua permissão de acesso, você pode consultar apenas os seus próprios dados.
+      operationId: getTransactions
+      tags:
+        - "Transações"
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/perPage"
+        - $ref: "#/components/parameters/query"
+        - $ref: "#/components/parameters/sortBy"
+        - $ref: "#/components/parameters/sortOrder"
+      responses:
+        200:
+          description: Consulta realizada com sucesso.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transactions"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
+  /transactions/{transactionId}:
+    get:
+      summary: Retorna uma transação específica através do ID
+      description: |
+        ## Descrição
+
+        Essa rota retorna uma transação específica com base no ID fornecido.
+
+        ## Segurança
+
+        Dependendo da sua permissão de acesso, você pode consultar apenas os seus próprios dados.
+      operationId: getTransactionById
+      tags:
+        - "Transações"
+      parameters:
+        - $ref: "#/components/parameters/transactionId"
+      responses:
+        200:
+          description: Transação encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transactions"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
 
   # Feedback
   /feedback:
@@ -1895,20 +1936,6 @@ paths:
   #       422:
   #         $ref: "#/components/responses/UnprocessableEntity"
 
-  # # Statistics endpoints
-  # /statics:
-  #   get:
-  #     summary: Retorna arquivo estático
-  #     description: Retorna arquivo estático.
-  #     operationId: getStatic
-  #     tags:
-  #       - "static: Arquivos estáticos"
-  #     responses:
-  #       200:
-  #         description: Consulta realizada com sucesso.
-  #       404:
-  #         $ref: "#/components/responses/NotFound"
-
   # /monitoring/healthcheck:
   #   get:
   #     summary: Verifica se o servidor está online.
@@ -1927,6 +1954,28 @@ paths:
   #       503:
   #         description: Servidor offline.
 
+  # Recursos Do Aplicativo
+  /app-resources:
+    get:
+      summary: Retorna os recursos do aplicativo.
+      description: |
+        ## Descrição
+
+        Retorna os recursos do aplicativo.
+      operationId: getAppResources
+      tags:
+        - "Recursos Do Aplicativo"
+      responses:
+        200:
+          description: Recursos retornados com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppResources"
+        404:
+          $ref: "#/components/responses/NotFound"
+
+  # Relatórios Disponíveis
   /reportTypes:
     get:
       summary: Obter lista de tipos de relatórios.
