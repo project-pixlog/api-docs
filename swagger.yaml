@@ -136,6 +136,10 @@ components:
         - scan_result
         - original_creation_date
       properties:
+        userId:
+          description: ID do usuário.
+          type: string
+          format: nanoid
         additionalInformation:
           description: Informações adicionais do relatório.
           type: string
@@ -209,8 +213,8 @@ components:
               - height
               - confiability
             properties:
-              logId:
-                description: Id da tora.
+              woodLogName:
+                description: Id da tora criado pelo cliente.
                 type: string
               confiability:
                 description: Grau de confiabilidade da medição do diâmetro.
@@ -222,14 +226,6 @@ components:
                 format: float
               width:
                 description: Largura do diâmetro medido.
-                type: integer
-                format: float
-              positionX:
-                description: Posição X do diâmetro medido.
-                type: integer
-                format: float
-              positionY:
-                description: Posição Y do diâmetro medido.
                 type: integer
                 format: float
     postV1Groups:
@@ -1482,7 +1478,14 @@ paths:
   /scans:
     post:
       summary: Cria um novo relatório de escaneamento.
-      description: Cria um novo relatório de escaneamento.
+      description: |
+        ## Descrição
+
+        Utilize esta função para criar um novo relatório de escaneamento. Esses relatórios contêm informações detalhadas sobre os resultados dos escaneamentos realizados. Utilize esta rota para acessar e visualizar os dados dos escaneamentos de forma fácil e organizada.
+
+        ## Segurança
+
+        Dependendo da sua permissão de acesso, você pode criar apenas relatórios de escaneamento para si mesmo ou para qualquer usuário da sua empresa.
       operationId: createReport
       tags:
         - "Relatórios de Escaneamento"
@@ -1494,6 +1497,10 @@ paths:
       responses:
         201:
           description: Relatório de escaneamento criado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scans"
         422:
           $ref: "#/components/responses/UnprocessableEntity"
     get:
@@ -1586,6 +1593,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         422:
           $ref: "#/components/responses/UnprocessableEntity"
+
   # Grupos de Relatórios
   /groups:
     post:
