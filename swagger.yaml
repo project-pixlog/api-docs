@@ -130,9 +130,10 @@ components:
             level2long:
               description: Cidade do usuário.
               type: string
-    postV1Scans:
+    postV2Scans:
       type: object
       required:
+        - userId
         - scan_result
         - original_creation_date
       properties:
@@ -142,6 +143,9 @@ components:
           format: nanoid
         additionalInformation:
           description: Informações adicionais do relatório.
+          type: string
+        reportName:
+          description: Nome do relatório.
           type: string
         originalTimezone:
           description: Fuso horário original de quando o relatório foi criado.
@@ -228,7 +232,7 @@ components:
                 description: Largura do diâmetro medido.
                 type: integer
                 format: float
-    postV1Groups:
+    postV2Groups:
       type: object
       properties:
         appVersion:
@@ -239,6 +243,9 @@ components:
           type: string
         additionalInformation:
           description: Informações adicionais do relatório.
+          type: string
+        reportName:
+          description: Nome do relatório.
           type: string
         originalTimezone:
           description: Fuso horário original de quando o relatório foi criado.
@@ -431,6 +438,23 @@ components:
           description: Recibo de pagamento.
           type: string
           format: base64
+    putV2Scans:
+      type: object
+      required:
+        - "reportId"
+      properties:
+        reportName:
+          description: Nome do relatório.
+          type: string
+    putV2Group:
+      type: object
+      required:
+        - "reportId"
+      properties:
+        reportName:
+          description: Nome do relatório.
+          type: string
+
     # Models
     Error:
       type: object
@@ -467,7 +491,10 @@ components:
           type: string
           enum:
             - active
-            - deleted
+            - archived
+        reportName:
+          description: Nome do relatório.
+          type: string
         additionalInformation:
           description: Informações adicionais do relatório.
           type: string
@@ -600,6 +627,9 @@ components:
           enum:
             - active
             - deleted
+        reportName:
+          description: Nome do relatório.
+          type: string
         appVersion:
           description: Versão do aplicativo que gerou o relatório.
           type: string
@@ -854,6 +884,11 @@ info:
     projetado para ser usado em conjunto com um aplicativo que faz uso da tecnologia de realidade aumentada para medir e
     gerar informações. A API se comunica com um banco de dados MariaDB para armazenar e recuperar as informações do sistema.
 
+    # Autenticação
+
+    A API utiliza um sistema de autenticação baseado em tokens de acesso. Para obter um token de acesso, é necessário que
+    o usuário faça login na aplicação.
+
 servers:
   - url: http://localhost:3000/v1
     description: Servidor local
@@ -886,7 +921,7 @@ tags:
 
 paths:
   # Autenticação
-  /auth:
+  /auth/login:
     post:
       summary: Autentica um usuário.
       description: |
@@ -916,7 +951,7 @@ paths:
           $ref: "#/components/responses/BadRequest"
         422:
           $ref: "#/components/responses/UnprocessableEntity"
-  /refreshToken:
+  /auth/refresh-token:
     post:
       summary: Gera um novo token de acesso.
       description: Gera um novo token de acesso.
@@ -941,13 +976,13 @@ paths:
           $ref: "#/components/responses/BadRequest"
         422:
           $ref: "#/components/responses/UnprocessableEntity"
-  /signout:
+  /auth/logout:
     post:
-      summary: Efetua logout.
+      summary: Encerra a sessão de um usuário.
       description: |
         ## Descrição
 
-        Encerra a sessão de um dispositivo específico ou de todos os dispositivos associados a uma conta de usuário.
+        Encerra a sessão de um usuário, invalidando o token de acesso.
       operationId: signout
       tags:
         - "Autenticação"
@@ -960,8 +995,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         422:
           $ref: "#/components/responses/UnprocessableEntity"
+  /auth/confirm-email:
   # Usuários
-  /confirmEmail:
     post:
       summary: Confirmar o e-mail do usuário.
       description: |
@@ -970,7 +1005,7 @@ paths:
         Confirma o e-mail associado a um usuário registrado.
       operationId: confirmEmail
       tags:
-        - "Usuários"
+        - "Autenticação"
       security: []
       requestBody:
         required: true
@@ -1493,7 +1528,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/postV1Scans"
+              $ref: "#/components/schemas/postV2Scans"
       responses:
         201:
           description: Relatório de escaneamento criado com sucesso.
@@ -1568,6 +1603,72 @@ paths:
           $ref: "#/components/responses/NotFound"
         422:
           $ref: "#/components/responses/UnprocessableEntity"
+    delete:
+      summary: Arquiva um relatório de escaneamento específico através do ID.
+      description: |
+        ## Descrição
+
+        Esta rota arquiva um relatório de escaneamento específico com base no ID fornecido.
+
+        ## Segurança
+
+        Dependendo da sua permissão de acesso, você pode arquivar apenas os relatórios de escaneamento que você criou.
+      operationId: deleteScanById
+      tags:
+        - "Relatórios de Escaneamento"
+      parameters:
+        - $ref: "#/components/parameters/reportId"
+      responses:
+        200:
+          description: Relatório excluído com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scans"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
+    put:
+      summary: Atualiza um relatório de escaneamento específico através do ID.
+      description: |
+        # Descrição
+
+        Esta rota atualiza um relatório de escaneamento específico com base no ID fornecido.
+
+        # Campos atualizáveis
+
+        <code>reportName</code>
+
+        # Segurança
+
+        Dependendo da sua permissão de acesso, você pode atualizar apenas os relatórios de escaneamento que você criou.
+      operationId: updateScanById
+      tags:
+        - "Relatórios de Escaneamento"
+      parameters:
+        - $ref: "#/components/parameters/reportId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/putV2Scans"
+      responses:
+        200:
+          description: Relatório atualizado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scans"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
   /scans/{scanId}/woodLogs:
     get:
       summary: Retorna uma lista de toras de um relatório de escaneamento específico através do ID.
@@ -1583,6 +1684,35 @@ paths:
       responses:
         200:
           description: Relatório encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scans"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
+  /scans/{scanId}/unarchive:
+    post:
+      summary: Desarquiva um relatório de escaneamento específico através do ID.
+      description: |
+        ## Descrição
+
+        Esta rota desarquiva um relatório de escaneamento específico com base no ID fornecido.
+
+        ## Segurança
+
+        Dependendo da sua permissão de acesso, você pode desarquivar apenas os relatórios de escaneamento que você criou.
+      operationId: unarchiveScanById
+      tags:
+        - "Relatórios de Escaneamento"
+      parameters:
+        - $ref: "#/components/parameters/reportId"
+      responses:
+        200:
+          description: Relatório desarquivado com sucesso.
           content:
             application/json:
               schema:
@@ -1611,7 +1741,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/postV1Groups"
+              $ref: "#/components/schemas/postV2Groups"
       parameters:
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/perPage"
@@ -1683,7 +1813,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/postV1Scans"
+                $ref: "#/components/schemas/postV2Scans"
         400:
           $ref: "#/components/responses/NotFound"
         422:
@@ -1691,7 +1821,14 @@ paths:
   /groups/{groupId}:
     get:
       summary: Retorna um relatório geral específico através do ID
-      description: Retorna um relatório geral específico através do ID.
+      description: |
+        # Descrição
+
+        Esta rota retorna um relatório geral específico com base no ID fornecido.
+
+        # Segurança
+
+        Dependendo da sua permissão de acesso, você pode visualizar apenas os relatórios de escaneamento que você criou.
       operationId: getGroupReportById
       tags:
         - "Grupos de Relatórios"
@@ -1700,6 +1837,99 @@ paths:
       responses:
         200:
           description: Relatório geral encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
+    delete:
+      summary: Arquiva um relatório geral específico através do ID.
+      description: |
+        ## Descrição
+
+        Esta rota arquiva um relatório geral específico com base no ID fornecido.
+
+        ## Segurança
+
+        Dependendo da sua permissão de acesso, você pode arquivar apenas os relatórios de escaneamento que você criou.
+      operationId: deleteGroupReportById
+      tags:
+        - "Grupos de Relatórios"
+      parameters:
+        - $ref: "#/components/parameters/groupId"
+      responses:
+        200:
+          description: Relatório geral excluído com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
+    put:
+      summary: Atualiza um relatório geral específico através do ID.
+      description: |
+        ## Descrição
+
+        Esta rota atualiza um relatório geral específico com base no ID fornecido.
+
+        ## Campos atualizáveis
+
+        <code>reportName</code>
+
+        ## Segurança
+
+        Dependendo da sua permissão de acesso, você pode atualizar apenas os relatórios de escaneamento que você criou.
+      operationId: updateGroupReportById
+      tags:
+        - "Grupos de Relatórios"
+      parameters:
+        - $ref: "#/components/parameters/groupId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/putV2Group"
+      responses:
+        200:
+          description: Relatório geral atualizado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
+  /groups/{groupId}/unarchive:
+    post:
+      summary: Desarquiva um relatório geral específico através do ID.
+      description: |
+        ## Descrição
+
+        Esta rota desarquiva um relatório geral específico com base no ID fornecido.
+
+        ## Segurança
+
+        Dependendo da sua permissão de acesso, você pode desarquivar apenas os relatórios de escaneamento que você criou.
+      operationId: unarchiveGroupReportById
+      tags:
+        - "Grupos de Relatórios"
+      parameters:
+        - $ref: "#/components/parameters/groupId"
+      responses:
+        200:
+          description: Relatório geral desarquivado com sucesso.
           content:
             application/json:
               schema:
@@ -1923,44 +2153,27 @@ paths:
           $ref: "#/components/responses/BadRequest"
         422:
           $ref: "#/components/responses/UnprocessableEntity"
-  # # Debug
-  # /debug:
-  #   post:
-  #     summary: Envia um arquivo de debug do Scarf.
-  #     description: Envia um arquivo de debug do Scarf.
-  #     operationId: sendDebug
-  #     tags:
-  #       - "debug: Debug"
-  #     responses:
-  #       200:
-  #         description: Operação realizada com sucesso.
-  #         content:
-  #           plain/text:
-  #             schema:
-  #               type: string
-  #               example: "Ok"
-  #       400:
-  #         $ref: "#/components/responses/BadRequest"
-  #       422:
-  #         $ref: "#/components/responses/UnprocessableEntity"
 
-  # /monitoring/healthcheck:
-  #   get:
-  #     summary: Verifica se o servidor está online.
-  #     description: Verifica se o servidor está online.
-  #     operationId: healthcheck
-  #     tags:
-  #       - "Monitoramento da API"
-  #     security: []
-  #     responses:
-  #       200:
-  #         description: Ok.
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: schemas/getHealthCheck.yaml
-  #       503:
-  #         description: Servidor offline.
+  # Debug
+  /debug:
+    post:
+      summary: Envia um arquivo de debug do Scarf.
+      description: Envia um arquivo de debug do Scarf.
+      operationId: sendDebug
+      tags:
+        - "debug: Debug"
+      responses:
+        200:
+          description: Operação realizada com sucesso.
+          content:
+            plain/text:
+              schema:
+                type: string
+                example: "Ok"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
 
   # Recursos Do Aplicativo
   /app-resources:
