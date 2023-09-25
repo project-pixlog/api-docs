@@ -186,8 +186,16 @@ components:
         specieFound:
           description: Espécie da madeira medida.
           type: string
-        length:
+        pileLength:
           description: Comprimento da pilha de madeira medida.
+          type: number
+          format: float
+        pileWidth:
+          description: Largura da pilha de madeira medida.
+          type: number
+          format: float
+        pileHeight:
+          description: Altura da pilha de madeira medida.
           type: number
           format: float
         sortingMin:
@@ -486,6 +494,9 @@ components:
           description: ID do comprador.
           type: string
           format: nanoid
+        counter:
+          description: Contador de relatórios.
+          type: integer
         status:
           description: Status do relatório.
           type: string
@@ -537,8 +548,16 @@ components:
         specieFound:
           description: Espécie da madeira medida.
           type: string
-        length:
+        pileLength:
           description: Comprimento da pilha de madeira medida.
+          type: number
+          format: float
+        pileWidth:
+          description: Largura da pilha de madeira medida.
+          type: number
+          format: float
+        pileHeight:
+          description: Altura da pilha de madeira medida.
           type: number
           format: float
         sortingMin:
