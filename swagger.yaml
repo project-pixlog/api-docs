@@ -907,6 +907,9 @@ info:
 
     A API utiliza um sistema de autenticação baseado em tokens de acesso. Para obter um token de acesso, é necessário que
     o usuário faça login na aplicação.
+    O token deve ser utilizado no cabeçalho da aplicação sob o nome:
+
+    <code>token</code>
 
 servers:
   - url: http://localhost:3000/v1
