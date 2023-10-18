@@ -134,8 +134,11 @@ components:
       type: object
       required:
         - userId
-        - scan_result
-        - original_creation_date
+        - appVersion
+        - durationInSec
+        - volume
+        - pileLength
+        - woodLogs
       properties:
         userId:
           description: ID do usuário.
@@ -221,9 +224,9 @@ components:
           items:
             type: object
             required:
+              - woodLogName
               - width
               - height
-              - confiability
             properties:
               woodLogName:
                 description: Id da tora criado pelo cliente.
@@ -892,6 +895,7 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+
 security:
   - accessToken: []
 

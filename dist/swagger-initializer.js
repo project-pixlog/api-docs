@@ -6,6 +6,9 @@ window.onload = function() {
     url: "https://raw.githubusercontent.com/project-pixlog/api-docs/gh-pages/swagger.yaml",
     dom_id: '#swagger-ui',
     deepLinking: true,
+    docExpansion: "list",
+    defaultModelsExpandDepth: -1,
+    defaultModelExpandDepth: 100,
     presets: [
       SwaggerUIBundle.presets.apis,
       SwaggerUIStandalonePreset
