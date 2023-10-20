@@ -2067,7 +2067,7 @@ paths:
           $ref: "#/components/responses/UnprocessableEntity"
 
   # Feedback
-  /feedback:
+  /feedbacks:
     post:
       summary: Cria um novo feedback
       description: Cria um novo feedback.
