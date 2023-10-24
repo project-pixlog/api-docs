@@ -2130,7 +2130,7 @@ paths:
           $ref: "#/components/responses/UnprocessableEntity"
 
   # Notificações por E-mail
-  /sendFile:
+  /notifications/report-file:
     post:
       summary: Envia arquivos para um usuário
       description: Envia arquivos para um usuário.
