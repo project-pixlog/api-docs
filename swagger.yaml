@@ -209,7 +209,7 @@ components:
           description: Valor máximo de classificação.
           type: number
           format: float
-        usedSettings:
+        reportSettings:
           description: Configurações utilizadas para gerar o relatório.
           type: object
           properties:
@@ -571,7 +571,7 @@ components:
           description: Valor máximo de classificação.
           type: number
           format: float
-        usedSettings:
+        reportSettings:
           description: Configurações utilizadas para gerar o relatório.
           type: object
           properties:
